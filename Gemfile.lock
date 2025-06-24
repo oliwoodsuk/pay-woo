@@ -95,10 +95,10 @@ GEM
     crass (1.0.6)
     csv (3.3.5)
     date (3.4.1)
-    dotenv (2.8.1)
-    dotenv-rails (2.8.1)
-      dotenv (= 2.8.1)
-      railties (>= 3.2)
+    dotenv (3.1.8)
+    dotenv-rails (3.1.8)
+      dotenv (= 3.1.8)
+      railties (>= 6.1)
     drb (2.2.3)
     erb (5.0.1)
     erubi (1.13.1)
@@ -293,7 +293,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  dotenv-rails (~> 2)
+  dotenv-rails (~> 3)
   pay-woo!
   puma
   rubocop-rails-omakase
