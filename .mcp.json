@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "shared-server": {
+      "type": "stdio",
+      "command": "node_modules/task-master-ai/mcp-server/server.js",
+      "args": [],
+      "env": {}
+    }
+  }
+}

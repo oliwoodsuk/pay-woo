@@ -22,5 +22,11 @@ Gem::Specification.new do |spec|
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   end
 
-  spec.add_dependency "rails", ">= 8.0.1"
+  spec.add_dependency "rails", ">= 8.0"
+  spec.add_dependency "pay", "~> 11.1"
+  spec.add_dependency "httparty", "~> 0.22"
+
+  spec.add_development_dependency "webmock", "~> 3"
+  spec.add_development_dependency "vcr", "~> 6"
+  spec.add_development_dependency "dotenv-rails", "~> 2"
 end
