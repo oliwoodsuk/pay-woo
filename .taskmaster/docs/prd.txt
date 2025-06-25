@@ -1,0 +1,376 @@
+# Product Requirements Document: Pay-Woo Gem
+
+## Executive Summary
+Develop a Ruby gem that extends the Pay gem (https://github.com/pay-rails/pay) to support WooCommerce billing and subscription management. This gem will integrate WooCommerce's Billing API for SaaS with Rails applications through the Pay gem's standardized interface.
+
+## Reference Materials and Development Approach
+This project includes comprehensive reference materials to guide development:
+
+- **Pay Gem Source**: Complete Pay gem codebase in `.reference/pay/` with examples of Stripe, Paddle Billing, and Lemon Squeezy implementations
+- **Implementation Guide**: Detailed processor implementation guide at `.reference/pay-gem-doc_adding_a_payment_processor.md`
+- **WooCommerce API Documentation**: Billing API documentation and OpenAPI specification in `.reference/`
+- **Environment Configuration**: Pre-configured environment variables in `.env` for WooCommerce API integration
+
+### Development Methodology
+- **Test-Driven Development**: Write comprehensive tests for each task/feature before implementation
+- **Reference-Based Implementation**: Follow existing processor patterns (Stripe, Paddle, Lemon Squeezy) as templates
+- **HTTParty Integration**: Use HTTParty for network requests instead of processor-specific gems
+- **Pay Namespace Compliance**: All classes must extend the Pay:: namespace following established patterns
+
+## Project Overview
+
+### Purpose
+Enable Rails applications using the Pay gem to process payments and manage subscriptions through WooCommerce stores, providing seamless integration with existing e-commerce infrastructure.
+
+### Target Users
+- Rails developers building SaaS applications
+- E-commerce businesses using WooCommerce who want to add subscription services
+- Developers migrating from other payment processors to WooCommerce
+
+### Key Dependencies
+- Pay gem (Rails payment processing framework)
+- HTTParty (HTTP client for API requests)
+- WooCommerce store with Subscriptions plugin
+- Ruby 3+ and Rails 8.0+
+
+## Technical Architecture
+
+### Core Components
+The gem must implement the Pay gem's standardized interface with these required classes:
+
+1. **Pay::Woo::Customer** - WooCommerce customer management
+2. **Pay::Woo::Charge** - One-time payment processing  
+3. **Pay::Woo::Subscription** - Recurring subscription management
+4. **Pay::Woo::PaymentMethod** - Payment method storage and management (although I'm not sure Woo has a concept of this, so we may need to tackle this differently)
+5. **Pay::Webhooks::WooController** - Webhook event processing
+
+### API Integration Pattern
+- Use HTTParty for all WooCommerce Billing API calls
+- Base URLs: 
+  - Production: https://woocommerce.com/wp-json/wccom/billing/1.0/
+  - Sandbox: https://sandbox.woocommerce.com/wp-json/wccom/billing/1.0/
+- Implement Pay gem's standardized method signatures
+- Handle WooCommerce Billing API authentication (Basic auth with API key + secret)
+- Support both production and sandbox environments
+
+### Authentication Pattern
+```ruby
+# WooCommerce Billing API Authentication
+encoded_credentials = Base64.encode64("#{api_key}:#{api_secret}").strip
+headers = {
+  'Authorization' => "Basic #{encoded_credentials}",
+  'Content-Type' => 'application/json'
+}
+```
+
+### Configuration Requirements
+The gem must support configuration via:
+- Environment variables (WOO_BILLING_API_KEY, WOO_BILLING_API_SECRET, WOO_BILLING_SIGNING_SECRET, WOO_BILLING_ENVIRONMENT)
+- Rails initializers
+- Environment selection (production/sandbox)
+- Webhook signature verification setup
+
+## Feature Requirements
+
+### 1. Customer Management
+**Requirements:**
+- Handle customer data through subscription/charge creation
+- Map Pay::Customer to WooCommerce billing contract owners
+- Customer information embedded in subscription/charge objects
+- No direct customer CRUD operations (handled through contracts)
+
+**Note:** WooCommerce Billing API doesn't have separate customer endpoints - customer data is managed through subscription contracts and charges.
+
+### 2. One-Time Charges
+**Requirements:**
+- Process single payments through WooCommerce billing charges
+- Support charge cancellation (DELETE for pending charges)
+- Handle charge metadata and descriptions
+- Map charges to WooCommerce billing charge objects
+- Handle redirect-based payment confirmation
+
+**API Endpoints:**
+- POST /charges (create charge)
+- GET /charges (list charges with status/limit/before params)
+- GET /charges/{contractID} (get specific charge)
+- DELETE /charges/{contractID} (cancel pending charge)
+
+### 3. Subscription Management
+**Requirements:**
+- Create recurring subscriptions with billing intervals (day, week, month, year)
+- Support subscription lifecycle: create, update, cancel
+- Handle subscription updates and plan changes
+- Manage trial periods (trial_period + trial_length)
+- Handle contract-based subscription model with UUIDs
+- Process redirect-based payment confirmation
+
+**API Endpoints:**
+- POST /subscriptions (create subscription contract)
+- GET /subscriptions (list contracts with status/limit/before params)
+- GET /subscriptions/{contractID} (get specific contract)
+- POST /subscriptions/{contractID} (update existing contract)
+- DELETE /subscriptions/{contractID} (cancel contract)
+
+### 4. Payment Method Management
+**Requirements:**
+- Handle redirect-based payment flow (customers redirected to WooCommerce.com)
+- Support payment method storage within WooCommerce billing system
+- Handle payment confirmation callbacks
+- Support multiple payment gateway types through WooCommerce.com
+
+**API Endpoints:**
+- Payment method creation happens through subscription/charge creation
+- Payment confirmation handled via redirect URLs
+- No direct payment method CRUD operations (handled by WooCommerce.com UI)
+
+### 5. Webhook Processing
+**Requirements:**
+- Verify webhook authenticity using WooCommerce billing signatures
+- Process subscription contract events (activated, renewed, cancelled)
+- Handle billing intent status changes (pending, completed, canceled)
+- Handle transaction events (created, completed, failed)
+- Queue webhook processing for reliability
+- Support configurable webhook endpoints
+
+**Webhook Events:**
+- saas_billing_contract.activated
+- saas_billing_contract.renewed
+- saas_billing_contract.cancelled
+- saas_billing_contract.updated
+- saas_billing_charge.completed
+- saas_billing_charge.failed
+- saas_billing_intent.completed
+- saas_billing_intent.canceled
+- saas_billing_transaction.completed
+
+### 6. Error Handling
+**Requirements:**
+- Custom exception classes for WooCommerce-specific errors
+- Retry logic for transient API failures
+- Comprehensive logging for debugging
+- Graceful degradation for partial service failures
+
+### 7. Testing Framework
+**Requirements:**
+- Unit tests for all core classes
+- Integration tests with WooCommerce sandbox
+- Mock API responses for reliable testing
+- Test coverage for error scenarios
+- Performance tests for high-volume operations
+
+## Development Approach
+
+### Test-Driven Implementation Strategy
+Each component must be developed using test-driven development:
+
+1. **Write Tests First**: Create comprehensive tests for each class/method before implementation
+2. **Reference Implementation**: Study existing Pay processors (Stripe, Paddle, Lemon Squeezy) as templates
+3. **API Integration**: Use HTTParty for all WooCommerce API calls
+4. **Error Handling**: Implement robust error handling and retry logic
+5. **Documentation**: Document each component with examples and usage instructions
+
+### Implementation Priority Order
+1. **Foundation**: API client, authentication, configuration
+2. **Core Classes**: Customer, Charge, Subscription, PaymentMethod
+3. **Webhook System**: Controller and event handlers
+4. **Integration Testing**: End-to-end testing with WooCommerce sandbox
+5. **Production Readiness**: Performance optimization and security audit
+
+## Quality Assurance
+
+### Testing Strategy
+- Test-driven development (TDD) approach
+- Unit tests for all public methods
+- Integration tests with WooCommerce test store
+- Mocked API responses for reliable CI/CD
+- Manual testing scenarios for complex workflows
+
+### Code Quality Standards
+- Ruby Style Guide compliance
+- 90%+ test coverage requirement
+- RuboCop static analysis
+- Automated security scanning
+- Performance benchmarking
+
+### Documentation Requirements
+- Comprehensive README with setup instructions
+- API documentation with examples
+- Migration guides from other processors
+- Troubleshooting guides
+- Contributing guidelines
+
+## Security Considerations
+
+### Data Protection
+- Secure API credential storage
+- No sensitive data in logs
+- Encrypted webhook payload verification
+- PCI DSS compliance guidelines
+- GDPR compliance for customer data
+
+### Authentication Security
+- API key and secret management
+- Webhook signature verification using signing secret
+- Rate limiting implementation
+- SSL/TLS enforcement
+- Input validation and sanitization
+
+## Success Metrics
+
+### Technical Metrics
+- 99.9% API call success rate
+- < 500ms average response time
+- Zero security vulnerabilities
+- 90%+ test coverage
+- Zero breaking changes in minor releases
+
+### Business Metrics
+- Successful integration with 10+ production applications
+- Support for 100+ concurrent subscriptions
+- Processing of $10,000+ in transactions
+- Active community engagement (GitHub stars, issues, PRs)
+- Positive developer feedback and adoption
+
+## Risk Mitigation
+
+### Technical Risks
+- **WooCommerce API changes**: Implement versioned API support and thorough testing
+- **Rate limiting**: Build intelligent retry logic and request queuing
+- **Data consistency**: Implement comprehensive synchronization and error recovery
+
+### Business Risks
+- **Competition**: Focus on superior developer experience and documentation
+- **Maintenance**: Establish sustainable contribution model and community support
+- **Security**: Regular security audits and prompt vulnerability patching
+
+## Deliverables
+
+### Required Pay Gem Integration Classes
+Based on the Pay gem processor implementation requirements, the following classes must be implemented:
+
+#### Core Payment Processor Classes
+1. **Pay::Woo::Customer** (`app/models/pay/woo/customer.rb`)
+   - Inherit from `Pay::Customer`
+   - Implement `api_record` method for WooCommerce customer retrieval/creation
+   - Implement `charge(amount, options)` for one-time payments
+   - Implement `subscribe(name:, plan:, **options)` for subscriptions
+   - Implement `add_payment_method(payment_method_id, default:)` for payment methods
+   - Handle WooCommerce-specific customer data mapping
+   - **Tests Required**: Customer creation, retrieval, charge creation, subscription creation
+
+2. **Pay::Woo::Charge** (`app/models/pay/woo/charge.rb`)
+   - Inherit from `Pay::Charge`
+   - Implement `self.sync(charge_id, object:)` class method for API synchronization
+   - Implement `refund!(amount_to_refund, **options)` for refunds
+   - Map WooCommerce charge/transaction data to Pay charge attributes
+   - Handle charge status mapping (pending, active, canceled)
+   - **Tests Required**: Charge creation, synchronization, refund processing, status updates
+
+3. **Pay::Woo::Subscription** (`app/models/pay/woo/subscription.rb`)
+   - Inherit from `Pay::Subscription`
+   - Implement `self.sync(subscription_id, object:)` class method
+   - Implement lifecycle methods: `cancel`, `cancel_now!`, `pause`, `resume`, `swap`
+   - Handle WooCommerce contract-based subscription model
+   - Map billing periods and intervals to Pay subscription attributes
+   - Support trial periods and billing cycle management
+   - **Tests Required**: Subscription creation, lifecycle management, plan changes, trial handling
+
+4. **Pay::Woo::PaymentMethod** (`app/models/pay/woo/payment_method.rb`)
+   - Inherit from `Pay::PaymentMethod`
+   - Implement `self.sync(pay_customer:, attributes:)` for payment method syncing
+   - Implement `make_default!` and `detach` methods
+   - Handle WooCommerce's redirect-based payment method storage
+   - Map payment method details to Pay payment method attributes
+   - **Tests Required**: Payment method storage, default setting, detachment
+
+#### Webhook Processing Classes
+5. **Pay::Webhooks::WooController** (`app/controllers/pay/webhooks/woo_controller.rb`)
+   - Inherit from `Pay::ApplicationController`
+   - Skip CSRF protection for webhook endpoints
+   - Implement webhook signature verification using WooCommerce signing secret
+   - Queue webhook events for processing via `Pay::Webhooks::ProcessJob`
+   - Handle multiple webhook event types
+   - **Tests Required**: Signature verification, event queuing, error handling
+
+6. **Webhook Event Handlers** (`lib/pay/woo/webhooks/`)
+   - `ContractActivated` - Handle subscription activation events
+   - `ContractRenewed` - Handle subscription renewal events
+   - `ContractCancelled` - Handle subscription cancellation events
+   - `ContractUpdated` - Handle subscription update events
+   - `ChargeCompleted` - Handle successful charge events
+   - `ChargeFailed` - Handle failed charge events
+   - Each handler implements `call(event)` method
+   - **Tests Required**: Event processing, data synchronization, error scenarios
+
+#### Configuration and Initialization Classes
+7. **Pay::Woo::Railtie** (`lib/pay/woo/railtie.rb`)
+   - Rails engine integration
+   - Load Pay::Woo configurations and routes
+   - Initialize webhook subscriptions
+   - **Tests Required**: Rails integration, configuration loading
+
+8. **Pay::Woo** (`lib/pay/woo.rb`)
+   - Main module with configuration methods
+   - API client initialization
+   - Environment and credential management
+   - HTTParty configuration and error handling
+   - **Tests Required**: Configuration management, API client setup
+
+#### Utility Classes
+9. **Pay::Woo::Error** (`lib/pay/woo/error.rb`)
+   - Custom exception classes for WooCommerce-specific errors
+   - API error mapping and handling
+   - **Tests Required**: Error handling and mapping
+
+10. **Pay::Woo::Client** (`lib/pay/woo/client.rb`)
+    - HTTParty-based API client
+    - Authentication header management
+    - Request/response handling
+    - Rate limiting and retry logic
+    - **Tests Required**: API communication, authentication, error handling
+
+### Testing Strategy for Each Component
+- **Unit Tests**: Comprehensive test coverage for all public methods
+- **Integration Tests**: Test API communication with WooCommerce sandbox
+- **Mock Tests**: Use VCR or similar for reliable CI/CD testing
+- **Webhook Tests**: Test webhook signature verification and event processing
+- **Error Scenario Tests**: Test handling of API failures and edge cases
+
+### Code Organization
+```
+lib/
+├── pay/
+│   └── woo/
+│       ├── version.rb
+│       ├── railtie.rb
+│       ├── client.rb
+│       ├── error.rb
+│       └── webhooks/
+│           ├── contract_activated.rb
+│           ├── contract_renewed.rb
+│           ├── contract_cancelled.rb
+│           ├── contract_updated.rb
+│           ├── charge_completed.rb
+│           └── charge_failed.rb
+app/
+├── models/
+│   └── pay/
+│       └── woo/
+│           ├── customer.rb
+│           ├── charge.rb
+│           ├── subscription.rb
+│           └── payment_method.rb
+└── controllers/
+    └── pay/
+        └── webhooks/
+            └── woo_controller.rb
+```
+
+### Documentation Deliverables
+- **Integration Guide**: Step-by-step setup and configuration
+- **API Reference**: Complete method documentation with examples
+- **Migration Guide**: Instructions for switching from other processors
+- **Webhook Setup Guide**: Webhook configuration and testing
+- **Troubleshooting Guide**: Common issues and solutions
+
+This PRD provides a comprehensive roadmap for developing a production-ready WooCommerce payment processor extension for the Pay gem, ensuring compatibility, reliability, and developer-friendly integration.

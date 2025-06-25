@@ -5,9 +5,9 @@ Gem::Specification.new do |spec|
   spec.version     = Pay::Woo::VERSION
   spec.authors     = [ "oliwoodsuk" ]
   spec.email       = [ "55204545+oliwoodsuk@users.noreply.github.com" ]
-  spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of Pay::Woo."
-  spec.description = "TODO: Description of Pay::Woo."
+  spec.homepage    = "https://github.com/pay-rails/pay-woo"
+  spec.summary     = "WooCommerce billing integration for Pay gem"
+  spec.description = "A Ruby gem that extends the Pay gem to support WooCommerce billing and subscription management"
   spec.license     = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
@@ -15,8 +15,8 @@ Gem::Specification.new do |spec|
   spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-  spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+  spec.metadata["source_code_uri"] = "https://github.com/pay-rails/pay-woo"
+  spec.metadata["changelog_uri"] = "https://github.com/pay-rails/pay-woo/blob/main/CHANGELOG.md"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]

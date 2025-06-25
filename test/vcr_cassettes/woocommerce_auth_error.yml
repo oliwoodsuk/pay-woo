@@ -1,0 +1,58 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: "<WOOCOMMERCE_URL>/wp-json/wc/v3/products"
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-Type:
+      - application/json
+      Accept:
+      - application/json
+      Authorization:
+      - Basic aW52YWxpZF9rZXk6aW52YWxpZF9zZWNyZXQ=
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 401
+      message: Unauthorized
+    headers:
+      Server:
+      - nginx
+      Date:
+      - Wed, 25 Jun 2025 07:41:07 GMT
+      Content-Type:
+      - application/json; charset=UTF-8
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      X-Robots-Tag:
+      - noindex
+      Link:
+      - <<WOOCOMMERCE_URL>/wp-json/>; rel="https://api.w.org/"
+      X-Content-Type-Options:
+      - nosniff
+      Access-Control-Expose-Headers:
+      - X-WP-Total, X-WP-TotalPages, Link
+      Access-Control-Allow-Headers:
+      - Authorization, X-WP-Nonce, Content-Disposition, Content-MD5, Content-Type
+      Vary:
+      - Origin
+      Cache-Control:
+      - no-cache, must-revalidate, max-age=0, no-store
+      X-Cache:
+      - BYPASS
+      X-Rq:
+      - lhr1 0 40 9980
+    body:
+      encoding: UTF-8
+      string: '{"code":"woocommerce_rest_cannot_view","message":"Sorry, you cannot
+        list resources.","data":{"status":401}}'
+  recorded_at: Wed, 25 Jun 2025 07:41:07 GMT
+recorded_with: VCR 6.3.1

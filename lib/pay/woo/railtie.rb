@@ -1,6 +1,8 @@
 module Pay
   module Woo
-    class Railtie < ::Rails::Railtie
+    if defined?(Rails)
+      class Railtie < ::Rails::Railtie
+      end
     end
   end
 end
